@@ -1,0 +1,248 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: alexboyce
+ * Date: 4/3/14
+ * Time: 11:17 AM
+ */
+
+function registration_import_export_menu() {
+  $items = array();
+  foreach (registration_get_registration_instances() as $instance) {
+    $type = $instance['entity_type'];
+    if (!in_array($type, array('registration', 'registration_type'))) {
+      $items[$type . '/%entity_object/registrations/settings/import'] = array(
+        'load arguments' => array($type),
+        'title' => 'Import',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('registration_entity_import_form', 0, 1),
+        'access callback' => 'registration_administer_registrations_access',
+        'access arguments' => array(0, 1),
+        'weight' => 0,
+        'type' => MENU_LOCAL_ACTION
+      );
+
+      $items[$type . '/%entity_object/registrations/settings/export'] = array(
+        'load arguments' => array($type),
+        'title' => 'Export',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('registration_entity_export_form', 0, 1),
+        'access callback' => 'registration_administer_registrations_access',
+        'access arguments' => array(0, 1),
+        'weight' => 1,
+        'type' => MENU_LOCAL_ACTION
+      );
+    }
+  }
+  return $items;
+}
+
+function registration_entity_import_form($form, &$form_state, $entity_type, $entity) {
+  $form_state['entity_type'] = $entity_type;
+  $form_state[$entity_type] = $entity;
+  $id = entity_id($entity_type, $entity_type);
+  $file = $form_state['upload_file'];
+  if (!!$file) {
+    _registration_process_import($form, $form_state, $entity_type, $entity);
+  }
+  else {
+    $form['upload_file']['file'] = array(
+      '#type' => 'file',
+      '#title' => t('Upload Registrants'),
+      '#description' => t('Supported file formats: .txt, .csv'),
+      '#required' => TRUE
+    );
+
+    $form['file_delimiter'] = array(
+      '#type' => 'select',
+      '#title' => t('Field Delimiter'),
+      '#options' => array(
+        'COMMA' => t('Comma (,)'),
+        'TAB' => t('Tab Character'),
+        'PIPE' => t('Pipe (|)')
+      )
+    );
+
+    $form['file_headers'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('The file contains header names'),
+      '#default_value' => 1
+    );
+
+    $form['upload'] = array(
+      '#type' => 'submit',
+      '#value' => t('Upload'),
+      '#suffix' => l('Cancel', $entity_type.'/'.$id.'/registrations/settings')
+    );
+  }
+
+  return $form;
+}
+
+function registration_entity_import_form_submit(&$form, &$form_state) {
+  $op = $form_state['values']['op'];
+  $entity_type = $form_state['entity_type'];
+  $entity = $form_state[$entity_type];
+
+  if ($op == 'Upload') {
+    $file = file_save_upload('upload_file', array('file_validate_extensions' => 'txt csv'));
+    if (!!$file) {
+      $form_state['upload_file'] = $file;
+      $form_state['file_delimiter'] = $form_state['values']['file_delimiter'];
+      $form_state['file_headers'] = $form_state['values']['file_headers'];
+      $form_state['rebuild'] = TRUE;
+    }
+    else {
+      form_set_error('upload_file', t("Unable to save file or file type unsupported"));
+    }
+  }
+  else {
+    $id = entity_id($entity_type, $entity);
+    $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
+    _registration_process_import_submit($form, $form_state, $entity_type, $entity);
+  }
+}
+
+function _registration_process_import($form, $form_state, $entity_type, $entity) {
+  $form_state['registration_type'] = registration_get_entity_registration_type($entity_type, $entity);
+  $instances = field_info_instances('registration', $form_state['registration_type']);
+  $file = $form_state['upload_file'];
+
+  $selector = array(
+    '#type' => 'select',
+    '#title' => t('Instance Field Part'),
+    '#title_visibility' => 'hidden',
+    '#options' => array(
+      'count' => t('Count (Self + Guests'),
+      'anon_email' => t('Email'),
+      'user_uid' => t('User ID')
+    ),
+    '#empty_option' => '-- Skip Field --',
+    '#empty_value' => FALSE
+  );
+
+  foreach ($instances as $instance) {
+    $field = field_read_field($instance['field_name']);
+    $columns = array();
+    foreach (array_keys($field['columns']) as $column_name) {
+      $columns[$instance['field_name'].':'.$column_name] = $column_name;
+    }
+    $selector['#options'][$instance['field_name']] = array($instance['label'] => $columns);
+  }
+
+  $delimiters = array(
+    'COMMA' => ',',
+    'TAB' => "\t",
+    'PIPE' => '|'
+  );
+
+  $filepath = drupal_realpath($file['destination']);
+  $fh = @fopen($filepath, 'r');
+  $filesize = filesize($filepath);
+  $delimiter = $delimiters[$form_state['file_delimiter']];
+  $csv = @fgetcsv($fh, $filesize, $delimiter);
+
+  if (!!$csv) {
+
+    $form['import'] = array(
+      '#tree' => TRUE,
+      '#theme' => 'registration_import_table',
+      '#empty' => t('No data was found in the file'),
+      '#header' => array(t('Column Name'), t('Mapped to Field Value'))
+    );
+
+    $headers = array();
+    if ($form_state['file_headers'] == 1) {
+      $headers = array_shift($csv);
+    }
+    else {
+      for ($i = 0; $i < count($csv[0]); $i++) {
+        $headers[] = t('Row !i', array('!i' => $i));
+      }
+    }
+
+    $headers = array_filter($headers);
+    foreach (reset($headers) as $header) {
+      $form['import'][] = array(
+        '#title' => $header
+      ) + $selector;
+    }
+  }
+  else {
+    form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
+    drupal_goto(); // Refresh the page.
+  }
+
+  return $form;
+}
+
+function _registration_process_import_submit($form, &$form_state, $entity_type, $entity) {
+  global $user;
+  global $language;
+  $values = array(
+    'type' => $form_state['registration_type'],
+    'entity_id' => entity_id($entity_type, $entity),
+    'entity_type' => $entity_type,
+    'state' => registration_get_default_state(),
+    'author_uid' => $user->uid
+  );
+
+  $tally = array(); // To tally up field recurrences
+  $count = 0;
+  $delimiters = array(
+    'COMMA' => ',',
+    'TAB' => "\t",
+    'PIPE' => '|'
+  );
+
+  // Load up the csv info again
+  $file = $form_state['upload_file'];
+  $filepath = drupal_realpath($file['destination']);
+  $fh = @fopen($filepath, 'r');
+  $filesize = filesize($filepath);
+  $delimiter = $delimiters[$form_state['file_delimiter']];
+  $csv = @fgetcsv($fh, $filesize, $delimiter);
+
+  if ($form_state['file_headers'] == 1) {
+    array_shift($csv);
+  }
+
+  // iterate through rows and columns from the form, map to field values
+  $rows = $form_state['values']['import'];
+  $map = array();
+
+  foreach ($rows as $j => $key) {
+    $map[$j] = $key;
+  }
+
+  // After mapping the csv file columns to registration values, import the values using the mappings
+  foreach ($csv as $i => $rows) {
+    $field_key_tally_reset = TRUE;
+    foreach ($rows as $j => $value) {
+      $key = $map[$j];
+      if ($key == 'count') {
+        $count++;
+        continue;
+      }
+
+      if (preg_match('^field_', $key) === FALSE) {
+        $values[$key] = $value;
+        continue;
+      }
+      list($key, $col_key) = explode(':', $key);
+      if ($field_key_tally_reset) {
+        $tally[$key] = isset($tally[$key]) ? $tally[$key]++ : 1;
+        $field_key_tally_reset = FALSE;
+      }
+      $values[$key][$language->langcode][$tally[$key]][$col_key] = $value;
+    }
+  }
+
+  $values['count'] = $count;
+  $registration = entity_create('registration', $values);
+  $registration->save();
+}
+
+function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
+
+}
