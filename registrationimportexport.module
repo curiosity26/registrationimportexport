@@ -345,7 +345,7 @@ function registration_export($ids = FALSE, $format = 'csv', $entity_type = NULL,
   }
 
   if ($format == 'csv') {
-
+    _registration_export_csv($registrations);
   }
   elseif ($format == 'json') {
     _registration_export_json($registrations);
