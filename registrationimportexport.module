@@ -102,7 +102,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
       $form_state['file_headers'] = $form_state['values']['file_headers'];
       if (preg_match('/js(on)?/', $file->filemime) != FALSE) {
         _registration_process_import_submit($form, $form_state, $entity_type, $entity);
-        $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
+        $form_state['redirect'] = $entity_type.'/'.$id.'/registrations';
       }
       else {
         $form_state['rebuild'] = TRUE;
@@ -113,7 +113,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
     }
   }
   else {
-    $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
+    $form_state['redirect'] = $entity_type.'/'.$id.'/registrations';
     _registration_process_import_submit($form, $form_state, $entity_type, $entity);
   }
 }
