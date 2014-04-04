@@ -445,6 +445,7 @@ function _registration_export_csv($registrations) {
   $file = file_save_data($data, 'temporary://'.$filename);
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'w');
+  dpm($rows, 'Rows');
   fputcsv($fh, $rows);
   fclose($fh);
   file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
