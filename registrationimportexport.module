@@ -395,7 +395,7 @@ function _registration_export_csv($registrations) {
   // Prepare the headers
   foreach ($reg_fields as $name => $value) {
     // fields are nested in [lang][item] format
-    if (preg_match('/^field_/', $name) !== FALSE && count(reset($reg_fields[$name])) > 1) {
+    if (preg_match('/^field_/', $name) !== FALSE && isset($value) && count(reset($value)) > 1) {
       foreach (reset($reg_fields[$name]) as $i => $item) {
         $headers[] = $name.'_'.$i;
       }
