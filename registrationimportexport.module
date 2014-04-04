@@ -395,11 +395,17 @@ function _registration_export_csv($registrations) {
   // Prepare the headers
   foreach ($reg_fields as $name => $value) {
     // fields are nested in [lang][item] format
-    if (preg_match('/^field_/', $name) == 1 && count(reset($value)) > 1) {
-      foreach (reset($reg_fields[$name]) as $i => $item) {
-        $headers[] = $name.'_'.$i;
+    if (preg_match('/^field_/', $name) == 1) {
+      $value = reset($value);
+
+      if (count($value) > 1) {
+        foreach ($value as $i => $item) {
+          foreach ($item as $n => $val) {
+            $headers[] = $name.'_'.$i.':'.$n;
+          }
+        }
+        continue;
       }
-      continue;
     }
 
     $headers[] = $name;
