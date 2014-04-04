@@ -476,6 +476,7 @@ function registrationimportexport_file_download($uri) {
   $target = file_uri_target($uri);
   dpm($target, 'Target');
   dpm($uri, 'URI');
+  print_r(func_get_args());
   if (preg_match('/^registration-export-/', $target) == 1) {
     $file = file_load_multiple(array(), array('uri' => $uri));
     dpm($file, 'File');
