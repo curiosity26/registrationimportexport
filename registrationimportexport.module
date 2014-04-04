@@ -398,8 +398,6 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
     // fields are nested in [lang][item] format
     if (preg_match('/^field_/', $name) == 1) {
       $value = reset($value);
-      dpm($value, 'Field Value');
-      dpm(count($value[0]), 'Count');
       if (count($value) > 1) {
         foreach ($value as $i => $item) {
           foreach ($item as $n => $val) {
@@ -468,12 +466,11 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   $file = file_save_data($data, 'temporary://'.$filename);
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'w');
-  dpm($rows, 'Rows');
   foreach ($rows as $row) {
     fputcsv($fh, $row);
   }
   fclose($fh);
-  file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
+  file_download(file_uri_scheme($file->uri), file_uri_target($file->uri));
 }
 
 function registration_import_export_file_download($uri) {
