@@ -409,7 +409,7 @@ function _registration_export_csv($registrations) {
 
   // Iterate over the registrations, if there are any. We will output a header template if not
   if (!!$registrations) {
-    foreach ($registrations as $registration) {
+    foreach ($registrations as $id => $registration) {
       $vars = get_object_vars($registration);
       unset(
       $vars['is_new'],
@@ -422,17 +422,19 @@ function _registration_export_csv($registrations) {
       $vars['created'],
       $vars['updated']
       );
-      $row = &$rows[];
+      $row = &$rows[$id];
 
       foreach ($vars as $name => $value) {
+        dpm((int) preg_match('/^field_/', $name) !== FALSE, 'Is Field');
+        dpm($value, 'Value of '.$name);
         if (preg_match('/^field_/', $name) !== FALSE && is_array($value) && count(reset($value)) > 1) {
-          foreach (reset($vars[$name]) as $item) {
+          foreach (reset($value) as $item) {
             $row[] = $item;
           }
           continue;
         }
 
-        $row[] = $name;
+        $row[] = $value;
       }
     }
   }
