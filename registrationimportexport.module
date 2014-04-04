@@ -100,7 +100,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
       $form_state['upload_file'] = $file;
       $form_state['file_delimiter'] = $form_state['values']['file_delimiter'];
       $form_state['file_headers'] = $form_state['values']['file_headers'];
-      if (preg_match('/js(on)?/', $file->filemime) !== FALSE) {
+      if (preg_match('/js(on)?/', $file->filemime) != FALSE) {
         _registration_process_import_submit($form, $form_state, $entity_type, $entity);
         $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
       }
