@@ -364,6 +364,7 @@ function _registration_export_json($registrations) {
   $filename = 'registration-export-'.(new DateTime())->format(DateTime::ISO8601).'.json';
   ob_start();
   header('Content-Type: application/json');
+  header('Content-Disposition: inline; filename="'.$filename.'"');
   print $output;
   $data = ob_get_contents();
   ob_end_clean();
@@ -375,7 +376,6 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   $header_registration = reset($registrations);
   $headers = array();
   $rows = array();
-  $type = registration_get_entity_registration_type($entity_type, $entity);
   if (!$header_registration) {
     $header_registration = entity_create('registration', array());
   }
@@ -460,13 +460,14 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   $filename = 'registration-export-'.(new DateTime())->format(DateTime::ISO8601).'.csv';
   ob_start();
   header('Content-Type: text/csv');
+  header('Content-Disposition: inline; filename="'.$filename.'"');
   $data = ob_get_contents();
   ob_end_clean();
   $file = file_save_data($data, 'temporary://'.$filename);
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'w');
-  foreach ($rows as $row) {
-    fputcsv($fh, $row);
+  foreach ($rows as $r) {
+    fputcsv($fh, $r);
   }
   fclose($fh);
   file_download(file_uri_scheme($file->uri), file_uri_target($file->uri));
@@ -474,12 +475,9 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
 
 function registrationimportexport_file_download($uri) {
   $target = file_uri_target($uri);
-  dpm($target, 'Target');
-  dpm($uri, 'URI');
   print_r(func_get_args());
   if (preg_match('/^registration-export-/', $target) == 1) {
     $file = file_load_multiple(array(), array('uri' => $uri));
-    dpm($file, 'File');
     if (!!$file) {
       $file = array_shift($file);
       return file_get_content_headers($file);
