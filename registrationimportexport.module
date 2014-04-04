@@ -398,7 +398,6 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
     // fields are nested in [lang][item] format
     if (preg_match('/^field_/', $name) == 1) {
       $value = reset($value);
-      $instance = field_read_instance('resgistration', $name, $type);
       dpm($value, 'Field Value');
       dpm(count($value[0]), 'Count');
       if (count($value) > 1) {
