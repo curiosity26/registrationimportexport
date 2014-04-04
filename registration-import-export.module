@@ -49,7 +49,7 @@ function registration_entity_import_form($form, &$form_state, $entity_type, $ent
     $form['upload_file']['file'] = array(
       '#type' => 'file',
       '#title' => t('Upload Registrants'),
-      '#description' => t('Supported file formats: .txt, .csv'),
+      '#description' => t('Supported file formats: .txt, .csv, .json, .js'),
       '#required' => TRUE
     );
 
@@ -60,7 +60,8 @@ function registration_entity_import_form($form, &$form_state, $entity_type, $ent
         'COMMA' => t('Comma (,)'),
         'TAB' => t('Tab Character'),
         'PIPE' => t('Pipe (|)')
-      )
+      ),
+      '#description' => t('When uploading a csv file, the delimiter is used to determine the separation of columns in rows')
     );
 
     $form['file_headers'] = array(
@@ -83,21 +84,27 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
   $op = $form_state['values']['op'];
   $entity_type = $form_state['entity_type'];
   $entity = $form_state[$entity_type];
+  $id = entity_id($entity_type, $entity);
 
   if ($op == 'Upload') {
-    $file = file_save_upload('upload_file', array('file_validate_extensions' => 'txt csv'));
+    $file = file_save_upload('upload_file', array('file_validate_extensions' => 'txt csv json js'));
     if (!!$file) {
       $form_state['upload_file'] = $file;
       $form_state['file_delimiter'] = $form_state['values']['file_delimiter'];
       $form_state['file_headers'] = $form_state['values']['file_headers'];
-      $form_state['rebuild'] = TRUE;
+      if (preg_match('/js(on)?/', $file->filemime) !== FALSE) {
+        _registration_process_import_submit($form, $form_state, $entity_type, $entity);
+        $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
+      }
+      else {
+        $form_state['rebuild'] = TRUE;
+      }
     }
     else {
       form_set_error('upload_file', t("Unable to save file or file type unsupported"));
     }
   }
   else {
-    $id = entity_id($entity_type, $entity);
     $form_state['redirect'] = $entity_type.'/'.$id.'/registrations/settings';
     _registration_process_import_submit($form, $form_state, $entity_type, $entity);
   }
@@ -136,11 +143,10 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
     'PIPE' => '|'
   );
 
-  $filepath = drupal_realpath($file['destination']);
+  $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
-  $filesize = filesize($filepath);
   $delimiter = $delimiters[$form_state['file_delimiter']];
-  $csv = @fgetcsv($fh, $filesize, $delimiter);
+  $csv = @fgetcsv($fh, $file->filesize, $delimiter);
 
   if (!!$csv) {
 
@@ -177,10 +183,28 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
 }
 
 function _registration_process_import_submit($form, &$form_state, $entity_type, $entity) {
+  // Load up the file info again
+  $file = $form_state['upload_file'];
+  if (preg_match('/csv/', $file->filemime) !== FALSE) {
+    $delimiters = array(
+      'COMMA' => ',',
+      'TAB' => "\t",
+      'PIPE' => '|'
+    );
+    $delimiter = $delimiters[$form_state['file_delimiter']];
+    _registration_import_csv($file, $entity_type, $entity, $form_state['values']['import'],
+      $delimiter, $form_state['file_headers']);
+  }
+  elseif (preg_match('/js(on)?/', $file->filemime) !== FALSE) {
+    _registration_import_json($file, $entity_type, $entity);
+  }
+}
+
+function _registration_import_csv($file, $entity_type, $entity, $header_map, $delimiter = ',', $headers = FALSE) {
   global $user;
   global $language;
-  $values = array(
-    'type' => $form_state['registration_type'],
+  $defaults = array(
+    'type' => registration_get_entity_registration_type($entity_type, $entity),
     'entity_id' => entity_id($entity_type, $entity),
     'entity_type' => $entity_type,
     'state' => registration_get_default_state(),
@@ -188,40 +212,43 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
   );
 
   $tally = array(); // To tally up field recurrences
-  $count = 0;
-  $delimiters = array(
-    'COMMA' => ',',
-    'TAB' => "\t",
-    'PIPE' => '|'
-  );
-
-  // Load up the csv info again
-  $file = $form_state['upload_file'];
-  $filepath = drupal_realpath($file['destination']);
+  $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
-  $filesize = filesize($filepath);
-  $delimiter = $delimiters[$form_state['file_delimiter']];
-  $csv = @fgetcsv($fh, $filesize, $delimiter);
-
-  if ($form_state['file_headers'] == 1) {
+  $csv = @fgetcsv($fh, $file->filesize, $delimiter);
+  fclose($fh);
+  if ($headers = TRUE) {
     array_shift($csv);
   }
 
   // iterate through rows and columns from the form, map to field values
-  $rows = $form_state['values']['import'];
   $map = array();
-
-  foreach ($rows as $j => $key) {
+  foreach ($header_map as $j => $key) {
     $map[$j] = $key;
   }
 
   // After mapping the csv file columns to registration values, import the values using the mappings
+  $states = registration_get_active_states();
   foreach ($csv as $i => $rows) {
     $field_key_tally_reset = TRUE;
+    $values = $defaults;
+
     foreach ($rows as $j => $value) {
       $key = $map[$j];
-      if ($key == 'count') {
-        $count++;
+
+      if ($key == 'anon_mail' && !!($reg_user = user_load_by_mail($value))) {
+        $values['user_uid'] = $reg_user->uid;
+        continue;
+      }
+
+      if ($key == 'user_uid' && isset($values['user_uid'])) {
+        continue;
+      }
+
+      if ($key == 'state') {
+        $value = preg_replace('/[\s-]+', '_', strtolower($value));
+        if (in_array($value, $states)) {
+          $values[$key] = $value;
+        }
         continue;
       }
 
@@ -229,20 +256,205 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
         $values[$key] = $value;
         continue;
       }
+
       list($key, $col_key) = explode(':', $key);
+      $matches = array();
+      if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) !== FALSE) {
+        $col_key = $matches['colkey'];
+      }
       if ($field_key_tally_reset) {
         $tally[$key] = isset($tally[$key]) ? $tally[$key]++ : 1;
         $field_key_tally_reset = FALSE;
       }
       $values[$key][$language->langcode][$tally[$key]][$col_key] = $value;
     }
-  }
 
-  $values['count'] = $count;
-  $registration = entity_create('registration', $values);
-  $registration->save();
+    $registration = entity_create('registration', $values);
+    if (!registration_save($registration)) {
+      drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
+    }
+  }
+  drupal_set_message(t('Registration import complete'));
+}
+
+function _registration_import_json($file, $entity_type, $entity) {
+  global $user;
+
+  $filepath = drupal_realpath($file->uri);
+  $fh = @fopen($filepath, 'r');
+  $contents = @fgets($fh, $file->filesize);
+  $data = json_decode($contents);
+  fclose($fh);
+
+  $defaults = array(
+    'type' => registration_get_entity_registration_type($entity_type, $entity),
+    'entity_id' => entity_id($entity_type, $entity),
+    'entity_type' => $entity_type,
+    'state' => registration_get_default_state(),
+    'author_uid' => $user->uid
+  );
+
+  foreach ($data as $i => $item) {
+    $item += $defaults;
+    $registration = entity_create('registration', $item);
+    if (!registration_save($registration)) {
+      drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
+    }
+  }
+  drupal_set_message(t('Registration import complete'));
 }
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
+  $form_state['entity_type'] = $entity_type;
+  $form_state['entity'] = $entity;
 
+  drupal_set_message(t('When migrating registrations to another website, JSON format is recommended.'), 'warning');
+  $form['format'] = array(
+    '#type' => 'select',
+    '#options' => array(
+      'csv' => 'Comma Separated Values (csv)',
+      'json' => 'JavaScript Object Notation (json)'
+    )
+  );
+
+  $form['export'] = array(
+    '#type' => 'submit',
+    '#value' => t('Export')
+  );
+
+  return $form;
+}
+
+function registration_entity_export_form_submit($form, &$form_state) {
+  $entity_type = $form_state['entity_type'];
+  $entity = $form_state[$entity_type];
+  $format = $form_state['values']['format'];
+  registration_export(FALSE, $format, $entity_type, $entity);
+}
+
+function registration_export($ids = FALSE, $format = 'csv', $entity_type = NULL, $entity = NULL) {
+  if (!!$ids) {
+    $registrations = registration_load_multiple($ids);
+  }
+  elseif (!!$entity_type && !!$entity) {
+    $registration_type = registration_get_entity_registration_type($entity_type, $entity);
+    $registrations = registration_load_multiple(FALSE, array('type' => $registration_type));
+  }
+  else {
+    $registrations = registration_load_multiple();
+  }
+
+  if ($format == 'csv') {
+
+  }
+  elseif ($format == 'json') {
+    _registration_export_json($registrations);
+  }
+  drupal_not_found();
+}
+
+function _registration_export_json($registrations) {
+  $export = array();
+  foreach ($registrations as $registration) {
+    $vars = get_object_vars($registration);
+    unset($vars['is_new']);
+    $export[] = $vars;
+  }
+  $output = entity_var_json_export($export);
+  $filename = 'registration-export-'.(new DateTime())->format(DateTime::ISO8601).'.json';
+  ob_start();
+  header('Content-Type: application/json');
+  print $output;
+  $data = ob_get_contents();
+  ob_end_clean();
+  $file = file_save_data($data, 'temporary://'.$filename);
+  file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
+}
+
+function _registration_export_csv($registrations) {
+  $header_registration = reset($registrations);
+  $headers = array();
+  $rows = array();
+  if (!$header_registration) {
+    $header_registration = entity_create('registration', array());
+  }
+  $reg_fields = get_object_vars($header_registration);
+
+  unset(
+  $reg_fields['is_new'],
+  $reg_fields['registration_id'],
+  $reg_fields['type'],
+  $reg_fields['entity_id'],
+  $reg_fields['entity_type'],
+  $reg_fields['author_uid'],
+  $reg_fields['rdf_mapping'],
+  $reg_fields['created'],
+  $reg_fields['updated']
+  );
+
+  // Prepare the headers
+  foreach ($reg_fields as $name => $value) {
+    // fields are nested in [lang][item] format
+    if (preg_match('/^field_', $name) !== FALSE && count(reset($reg_fields[$name])) > 1) {
+      foreach (reset($reg_fields[$name]) as $i => $item) {
+        $headers[] = $name.'_'.$i;
+      }
+      continue;
+    }
+
+    $headers[] = $name;
+  }
+
+  $rows[] = $headers;
+
+  // Iterate over the registrations, if there are any. We will output a header template if not
+  if (!!$registrations) {
+    foreach ($registrations as $registration) {
+      $vars = get_object_vars($registration);
+      unset(
+      $vars['is_new'],
+      $vars['registration_id'],
+      $vars['type'],
+      $vars['entity_id'],
+      $vars['entity_type'],
+      $vars['author_uid'],
+      $vars['rdf_mapping'],
+      $vars['created'],
+      $vars['updated']
+      );
+      $row = &$rows[];
+
+      foreach ($vars as $name => $value) {
+        if (preg_match('/^field_', $name) !== FALSE && count(reset($vars[$name])) > 1) {
+          foreach (reset($vars[$name]) as $item) {
+            $row[] = $item;
+          }
+          continue;
+        }
+
+        $row[] = $name;
+      }
+    }
+  }
+
+  $filename = 'registration-export-'.(new DateTime())->format(DateTime::ISO8601).'.csv';
+  ob_start();
+  header('Content-Type: text/csv');
+  $data = ob_get_contents();
+  ob_end_clean();
+  $file = file_save_data($data, 'temporary://'.$filename);
+  $filepath = drupal_realpath($file->uri);
+  $fh = @fopen($filepath, 'w');
+  fputcsv($fh, $rows);
+  fclose($fh);
+  file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
+}
+
+function registration_import_export_file_download($uri) {
+  $target = file_uri_target($uri);
+  if (preg_match('/^registration-export-/', $target) !== FALSE) {
+    $file = file_load_multiple(array(), array('uri' => $uri));
+    return file_get_content_headers($file);
+  }
+  return NULL;
 }
