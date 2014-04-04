@@ -145,10 +145,9 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
   $delimiter = $delimiters[$form_state['file_delimiter']];
-  $csv = @fgetcsv($fh, $file->filesize, $delimiter);
+  $csv = @fgetcsv($fh, 1000, $delimiter);
 
   if (!!$csv) {
-
     $form['import'] = array(
       '#tree' => TRUE,
       '#theme' => 'registration_import_table',
@@ -214,10 +213,9 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   $tally = array(); // To tally up field recurrences
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
-  $csv = @fgetcsv($fh, $file->filesize, $delimiter);
   fclose($fh);
   if ($headers = TRUE) {
-    array_shift($csv);
+    $csv = @fgetcsv($fh, 1000, $delimiter);
   }
 
   // iterate through rows and columns from the form, map to field values
@@ -228,11 +226,12 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
   // After mapping the csv file columns to registration values, import the values using the mappings
   $states = registration_get_active_states();
-  foreach ($csv as $i => $rows) {
+  $i = 0;
+  while($row = @fgetcsv($fh, 1000, $delimiter)) {
     $field_key_tally_reset = TRUE;
     $values = $defaults;
 
-    foreach ($rows as $j => $value) {
+    foreach ($row as $j => $value) {
       $key = $map[$j];
 
       if ($key == 'anon_mail' && !!($reg_user = user_load_by_mail($value))) {
@@ -252,27 +251,34 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
         continue;
       }
 
-      if (preg_match('^field_', $key) === FALSE) {
+      if (preg_match('/^field_/', $key) == FALSE) {
         $values[$key] = $value;
         continue;
       }
 
       list($key, $col_key) = explode(':', $key);
+      $instance = field_read_instance('registration', $key, $values['type']);
+      $cardinality = $instance['settings']['cardinality'];
+
       $matches = array();
-      if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) !== FALSE) {
+      if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) == 1) {
         $col_key = $matches['colkey'];
       }
       if ($field_key_tally_reset) {
         $tally[$key] = isset($tally[$key]) ? $tally[$key]++ : 1;
         $field_key_tally_reset = FALSE;
       }
-      $values[$key][$language->langcode][$tally[$key]][$col_key] = $value;
+
+      if ($cardinality == FIELD_CARDINALITY_UNLIMITED || ($tally[$key] <= $cardinality)) {
+        $values[$key][$language->langcode][$tally[$key]][$col_key] = $value;
+      }
     }
 
     $registration = entity_create('registration', $values);
     if (!registration_save($registration)) {
       drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
     }
+    $i++;
   }
   drupal_set_message(t('Registration import complete'));
 }
@@ -282,26 +288,31 @@ function _registration_import_json($file, $entity_type, $entity) {
   ini_set("auto_detect_line_endings", true);
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
-  $contents = @fgets($fh, $file->filesize);
-  $data = json_decode($contents);
-  fclose($fh);
+  $contents = file_get_contents($filepath);
+  if ($contents !== FALSE) {
+    $data = json_decode($contents);
+    fclose($fh);
 
-  $defaults = array(
-    'type' => registration_get_entity_registration_type($entity_type, $entity),
-    'entity_id' => entity_id($entity_type, $entity),
-    'entity_type' => $entity_type,
-    'state' => registration_get_default_state(),
-    'author_uid' => $user->uid
-  );
+    $defaults = array(
+      'type' => registration_get_entity_registration_type($entity_type, $entity),
+      'entity_id' => entity_id($entity_type, $entity),
+      'entity_type' => $entity_type,
+      'state' => registration_get_default_state(),
+      'author_uid' => $user->uid
+    );
 
-  foreach ($data as $i => $item) {
-    $item += $defaults;
-    $registration = entity_create('registration', $item);
-    if (!registration_save($registration)) {
-      drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
+    foreach ($data as $i => $item) {
+      $item += $defaults;
+      $registration = entity_create('registration', $item);
+      if (!registration_save($registration)) {
+        drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
+      }
     }
+    drupal_set_message(t('Registration import complete'));
   }
-  drupal_set_message(t('Registration import complete'));
+  else {
+    drupal_set_message(t('Unable to import the file'), 'error');
+  }
 }
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
@@ -369,7 +380,7 @@ function _registration_export_json($registrations) {
   $data = ob_get_contents();
   ob_end_clean();
   $file = file_save_data($data, 'temporary://'.$filename);
-  file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
+  file_download(file_uri_scheme($file->uri), file_uri_target($file->uri));
 }
 
 function _registration_export_csv($registrations, $entity_type, $entity) {
