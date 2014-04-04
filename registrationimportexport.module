@@ -11,7 +11,7 @@ function registrationimportexport_menu() {
   foreach (registration_get_registration_instances() as $instance) {
     $type = $instance['entity_type'];
     if (!in_array($type, array('registration', 'registration_type'))) {
-      $items[$type . '/%entity_object/registrations/settings/import'] = array(
+      $items[$type . '/%entity_object/registrations/import'] = array(
         'load arguments' => array($type),
         'title' => 'Import',
         'page callback' => 'drupal_get_form',
@@ -22,7 +22,7 @@ function registrationimportexport_menu() {
         'type' => MENU_LOCAL_ACTION
       );
 
-      $items[$type . '/%entity_object/registrations/settings/export'] = array(
+      $items[$type . '/%entity_object/registrations/export'] = array(
         'load arguments' => array($type),
         'title' => 'Export',
         'page callback' => 'drupal_get_form',
