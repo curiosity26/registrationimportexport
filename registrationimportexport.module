@@ -41,8 +41,7 @@ function registration_entity_import_form($form, &$form_state, $entity_type, $ent
   $form_state['entity_type'] = $entity_type;
   $form_state[$entity_type] = $entity;
   $id = entity_id($entity_type, $entity_type);
-  $file = $form_state['upload_file'];
-  if (!!$file) {
+  if (isset($form_state['upload_file']) && !!($file = $form_state['upload_file'])) {
     _registration_process_import($form, $form_state, $entity_type, $entity);
   }
   else {
