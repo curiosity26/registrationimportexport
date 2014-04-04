@@ -408,7 +408,6 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
       }
       if (count($value[0]) > 1) {
         foreach ($value[0] as $n => $item) {
-          dpm($item, 'Value $item');
           $headers[] = $name.':'.$n;
         }
         continue;
@@ -475,7 +474,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
 
 function registration_import_export_file_download($uri) {
   $target = file_uri_target($uri);
-  if (preg_match('/^registration-export-/', $target) !== FALSE) {
+  if (preg_match('/^registration-export-/', $target) == 1) {
     $file = file_load_multiple(array(), array('uri' => $uri));
     return file_get_content_headers($file);
   }
