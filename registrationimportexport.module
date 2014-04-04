@@ -174,7 +174,7 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
     }
 
     $headers = array_filter($headers);
-    foreach (reset($headers) as $header) {
+    foreach ($headers as $header) {
       $form['import'][] = array(
         '#title' => $header
       ) + $selector;
