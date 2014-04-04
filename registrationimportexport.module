@@ -306,7 +306,7 @@ function _registration_import_json($file, $entity_type, $entity) {
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
   $form_state['entity_type'] = $entity_type;
-  $form_state['entity'] = $entity;
+  $form_state[$entity_type] = $entity;
 
   drupal_set_message(t('When migrating registrations to another website, JSON format is recommended.'), 'warning');
   $form['format'] = array(
