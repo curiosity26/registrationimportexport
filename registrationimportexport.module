@@ -472,7 +472,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   file_download(file_uri_scheme($file->uri), file_uri_target($file->uri));
 }
 
-function registration_import_export_file_download($uri) {
+function registrationimportexport_file_download($uri) {
   $target = file_uri_target($uri);
   if (preg_match('/^registration-export-/', $target) == 1) {
     $file = file_load_multiple(array(), array('uri' => $uri));
