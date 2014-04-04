@@ -86,7 +86,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
   $id = entity_id($entity_type, $entity);
 
   if ($op == 'Upload') {
-    $file = file_save_upload('upload_file', array('file_validate_extensions' => 'txt csv json js'));
+    $file = file_save_upload('upload_file', array('file_validate_extensions' => array('txt csv json js')));
     if (!!$file) {
       $form_state['upload_file'] = $file;
       $form_state['file_delimiter'] = $form_state['values']['file_delimiter'];
