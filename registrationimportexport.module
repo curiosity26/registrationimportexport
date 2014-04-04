@@ -345,7 +345,7 @@ function registration_export($ids = FALSE, $format = 'csv', $entity_type = NULL,
   }
 
   if ($format == 'csv') {
-    _registration_export_csv($registrations);
+    _registration_export_csv($registrations, $entity_type, $entity);
   }
   elseif ($format == 'json') {
     _registration_export_json($registrations);
@@ -371,10 +371,11 @@ function _registration_export_json($registrations) {
   file_download(array('schema' => file_uri_scheme($file->uri), 'target' => file_uri_target($file->uri)));
 }
 
-function _registration_export_csv($registrations) {
+function _registration_export_csv($registrations, $entity_type, $entity) {
   $header_registration = reset($registrations);
   $headers = array();
   $rows = array();
+  $type = registration_get_entity_registration_type($entity_type, $entity);
   if (!$header_registration) {
     $header_registration = entity_create('registration', array());
   }
@@ -397,14 +398,21 @@ function _registration_export_csv($registrations) {
     // fields are nested in [lang][item] format
     if (preg_match('/^field_/', $name) == 1) {
       $value = reset($value);
+      $instance = field_read_instance('resgistration', $name, $type);
       dpm($value, 'Field Value');
-      dpm(count($value), 'Count');
+      dpm(count($value[0]), 'Count');
       if (count($value) > 1) {
         foreach ($value as $i => $item) {
-          dpm($item, 'Value $item');
           foreach ($item as $n => $val) {
             $headers[] = $name.'_'.$i.':'.$n;
           }
+        }
+        continue;
+      }
+      if (count($value[0]) > 1) {
+        foreach ($value[0] as $n => $item) {
+          dpm($item, 'Value $item');
+          $headers[] = $name.':'.$n;
         }
         continue;
       }
