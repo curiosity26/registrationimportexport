@@ -81,7 +81,6 @@ function registration_entity_import_form($form, &$form_state, $entity_type, $ent
 function registration_entity_import_form_validate(&$form, &$form_state) {
   if (!isset($form_state['upload_file'])) {
     $file = file_save_upload('upload_file', array('file_validate_extensions' => array('txt csv json js')));
-    dpm($file, 'File');
     if (!!$file) {
       $form_state['upload_file'] = $file;
     }
@@ -166,7 +165,7 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
 
     $headers = array();
     if ($form_state['file_headers'] == 1) {
-      $headers = array_shift($csv);
+      $headers = $csv;
     }
     else {
       for ($i = 0; $i < count($csv[0]); $i++) {
