@@ -211,6 +211,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'author_uid' => $user->uid
   );
 
+  ini_set("auto_detect_line_endings", true);
   $tally = array(); // To tally up field recurrences
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
@@ -279,7 +280,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
 function _registration_import_json($file, $entity_type, $entity) {
   global $user;
-
+  ini_set("auto_detect_line_endings", true);
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
   $contents = @fgets($fh, $file->filesize);
