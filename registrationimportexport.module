@@ -6,7 +6,7 @@
  * Time: 11:17 AM
  */
 
-function registration_import_export_menu() {
+function registrationimportexport_menu() {
   $items = array();
   foreach (registration_get_registration_instances() as $instance) {
     $type = $instance['entity_type'];
