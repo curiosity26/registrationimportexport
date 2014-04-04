@@ -425,11 +425,15 @@ function _registration_export_csv($registrations) {
       $row = &$rows[$id];
 
       foreach ($vars as $name => $value) {
-        dpm((int)(preg_match('/^field_/', $name) == 1), 'Is Field');
-        dpm($value, 'Value of '.$name);
-        if (preg_match('/^field_/', $name) == 1 && count(reset($value)) > 1) {
-          foreach (reset($value) as $item) {
-            $row[] = $item;
+        if (preg_match('/^field_/', $name) == 1) {
+          $value = reset($value);
+          if (count($value) > 1) {
+            foreach ($value as $item) {
+              $row[] = $item;
+            }
+          }
+          else {
+            $row[] = $value[0];
           }
           continue;
         }
