@@ -241,6 +241,10 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
     foreach ($row as $j => $value) {
       $key = $map[$j];
+      if (!$key) {
+        $values[$header_map[$j]] = NULL;
+        continue;
+      }
 
       if ($key == 'anon_mail' && !!($reg_user = user_load_by_mail($value))) {
         $values['user_uid'] = $reg_user->uid;
@@ -494,7 +498,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
 
 function registrationimportexport_file_download($uri) {
   $target = file_uri_target($uri);
-  print_r(func_get_args());
+
   if (preg_match('/^registration-export-/', $target) == 1) {
     $file = file_load_multiple(array(), array('uri' => $uri));
     if (!!$file) {
@@ -503,4 +507,32 @@ function registrationimportexport_file_download($uri) {
     }
   }
   return NULL;
+}
+
+function registrationimportexport_theme() {
+  $theme = array(
+    'registration_import_table' => array(
+      'render element' => 'element'
+    )
+  );
+
+  return $theme;
+}
+
+function theme_registration_import_table($variables) {
+  $element = $variables['element'];
+  $children = element_children($element);
+  $rows = array();
+
+  foreach ($children as $name) {
+    $child = &$children[$name];
+    $child['#title_display'] = 'hidden';
+    $child['#theme_wrappers'] = array();
+    $rows[] = array(
+      t('!title', array('!title' => $child['#title'])),
+      drupal_render($child)
+    );
+  }
+
+  return theme('table', array('header' => $element['#header'], 'rows' => $rows, 'empty' => $element['#empty']));
 }
