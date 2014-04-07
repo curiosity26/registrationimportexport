@@ -240,13 +240,11 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   $states = registration_get_active_states();
   $i = 0;
   while($row = @fgetcsv($fh, 1000, $delimiter)) {
-    dpm($row, 'Processing Row');
     $field_key_tally_reset = TRUE;
     $values = $defaults;
 
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
-      dpm($key, 'Processing Column');
       if ($key == FALSE) {
         continue;
       }
@@ -258,6 +256,9 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
       if ($key == 'user_uid' && isset($values['user_uid'])) {
         continue;
+      }
+      elseif ($key == 'user_uid' && !$value) {
+        $value = 0;
       }
 
       if ($key == 'state') {
