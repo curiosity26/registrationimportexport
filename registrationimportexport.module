@@ -199,7 +199,7 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
   $file = $form_state['upload_file'];
 
   if (preg_match('/csv/', $file->filemime) != FALSE) {
-    dpm($file, 'Upload Filed');
+    dpm($form_state['values']['import'], 'Upload Filed');
     $delimiters = array(
       'COMMA' => ',',
       'TAB' => "\t",
