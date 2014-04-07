@@ -224,7 +224,8 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'entity_id' => entity_id($entity_type, $entity),
     'entity_type' => $entity_type,
     'state' => registration_get_default_state(),
-    'author_uid' => $user->uid
+    'author_uid' => $user->uid,
+    'count' => 1
   );
 
   ini_set("auto_detect_line_endings", TRUE);
