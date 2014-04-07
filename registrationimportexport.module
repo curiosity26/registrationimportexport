@@ -219,11 +219,12 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
 
 function _registration_import_csv($file, $entity_type, $entity, $header_map, $delimiter = ',', $headers = FALSE) {
   global $user;
+  $default_state = registration_get_default_state();
   $defaults = array(
     'type' => registration_get_entity_registration_type($entity_type, $entity),
     'entity_id' => entity_id($entity_type, $entity),
     'entity_type' => $entity_type,
-    'state' => registration_get_default_state(),
+    'state' => $default_state->name,
     'author_uid' => $user->uid,
     'count' => 1
   );
