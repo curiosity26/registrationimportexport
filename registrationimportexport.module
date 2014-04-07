@@ -219,7 +219,6 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
 
 function _registration_import_csv($file, $entity_type, $entity, $header_map, $delimiter = ',', $headers = FALSE) {
   global $user;
-  global $language;
   $defaults = array(
     'type' => registration_get_entity_registration_type($entity_type, $entity),
     'entity_id' => entity_id($entity_type, $entity),
@@ -278,6 +277,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       list($key, $col_key) = explode(':', $key);
       $instance = field_read_instance('registration', $key, $values['type']);
       $field = field_read_field($instance['field_name']);
+      dpm($field);
       $cardinality = $field['cardinality'];
 
       $matches = array();
@@ -290,7 +290,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       }
 
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED || ($tally[$key] <= $cardinality)) {
-        $values[$key][$GLOBALS['user']->language][$tally[$key]][$col_key] = $value;
+        $values[$key]['und'][$tally[$key]][$col_key] = $value;
       }
     }
 
