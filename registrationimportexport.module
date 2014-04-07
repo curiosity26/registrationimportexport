@@ -537,10 +537,11 @@ function theme_registration_import_table($variables) {
     $child['#title_display'] = 'hidden';
     $child['#theme_wrappers'] = array();
     $rows[] = array(
-      t('!title', array('!title' => $child['#title'])),
+      t('@title', array('@title' => $child['#title'])),
       drupal_render($child)
     );
   }
 
-  return theme('table', array('header' => $element['#header'], 'rows' => $rows, 'empty' => $element['#empty']));
+  $output = theme('table', array('header' => $element['#header'], 'rows' => $rows, 'empty' => $element['#empty']));
+  return $output;
 }
