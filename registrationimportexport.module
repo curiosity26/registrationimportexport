@@ -528,7 +528,6 @@ function registrationimportexport_theme($existing, $type, $theme, $path) {
 function theme_registration_import_table($variables) {
   $element = $variables['element'];
   $children = element_children($element, TRUE);
-  dpm($element, 'Render Element');
   $rows = array();
 
   foreach ($children as $name) {
