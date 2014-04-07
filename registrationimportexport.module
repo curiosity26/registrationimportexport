@@ -197,6 +197,7 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
 function _registration_process_import_submit($form, &$form_state, $entity_type, $entity) {
   // Load up the file info again
   $file = $form_state['upload_file'];
+  dpm($file, 'Upload Filed');
   if (preg_match('/csv/', $file->filemime) !== FALSE) {
     $delimiters = array(
       'COMMA' => ',',
@@ -241,6 +242,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
+      dpm($key, 'Processing');
       if (!$key) {
         $col_key = !empty($headers) ? $headers[$j] : 'Row '.$j;
         $values[$col_key] = NULL;
@@ -288,7 +290,9 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     }
 
     $registration = entity_create('registration', $values);
-    if (!registration_save($registration)) {
+    dpm($registration, "Registration");
+    $success = registration_save($registration);
+    if (!$success) {
       drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
     }
     $i++;
