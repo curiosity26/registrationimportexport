@@ -532,7 +532,7 @@ function theme_registration_import_table($variables) {
   $rows = array();
 
   foreach ($children as $name) {
-    $child = &$children[$name];
+    $child = &$element[$name];
     $child['#title_display'] = 'hidden';
     $child['#theme_wrappers'] = array();
     $rows[] = array(
