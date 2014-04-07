@@ -197,8 +197,9 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
 function _registration_process_import_submit($form, &$form_state, $entity_type, $entity) {
   // Load up the file info again
   $file = $form_state['upload_file'];
-  dpm($file, 'Upload Filed');
+
   if (preg_match('/csv/', $file->filemime) != FALSE) {
+    dpm($file, 'Upload Filed');
     $delimiters = array(
       'COMMA' => ',',
       'TAB' => "\t",
@@ -210,6 +211,10 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
   }
   elseif (preg_match('/js(on)?/', $file->filemime) != FALSE) {
     _registration_import_json($file, $entity_type, $entity);
+  }
+  else {
+    drupal_set_message(t('Unsupported file type'), 'error');
+    drupal_goto();
   }
 }
 
