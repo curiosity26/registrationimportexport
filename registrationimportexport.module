@@ -289,7 +289,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       }
 
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED || ($tally[$key] <= $cardinality)) {
-        $values[$key][$language->langcode][$tally[$key]][$col_key] = $value;
+        $values[$key][$GLOBALS['user']->language][$tally[$key]][$col_key] = $value;
       }
     }
 
