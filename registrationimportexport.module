@@ -528,7 +528,7 @@ function registrationimportexport_theme($existing, $type, $theme, $path) {
 function theme_registration_import_table($variables) {
   $element = $variables['element'];
   $children = element_children($element, TRUE);
-  dpm($variables, 'Render Element');
+  dpm($element, 'Render Element');
   $rows = array();
 
   foreach ($children as $name) {
@@ -541,6 +541,5 @@ function theme_registration_import_table($variables) {
     );
   }
 
-  $output = theme('table', array('header' => $element['#header'], 'rows' => $rows, 'empty' => $element['#empty']));
-  return $output;
+  return theme('table', array('header' => $element['#header'], 'rows' => $rows, 'empty' => $element['#empty']));
 }
