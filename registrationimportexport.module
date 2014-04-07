@@ -130,7 +130,8 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
       'Registration' => array(
         'count' => t('Count (Self + Guests)'),
         'anon_email' => t('Email'),
-        'user_uid' => t('User ID')
+        'user_uid' => t('User ID'),
+        'state' => t('Registration State')
       )
     ),
     '#empty_option' => '-- Skip Field --',
