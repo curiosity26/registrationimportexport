@@ -509,6 +509,7 @@ function registrationimportexport_element_info() {
   return array(
     'registration_import_table' => array(
       '#input' => TRUE,
+      '#theme' => 'registration_import_table',
       '#theme_wrappers' => array('form_element'),
       '#header' => array(),
       '#empty' => NULL,
@@ -528,7 +529,7 @@ function registrationimportexport_theme($existing, $type, $theme, $path) {
 
 function theme_registration_import_table($variables) {
   $element = $variables['element'];
-  $children = element_children($element);
+  $children = element_children($element, TRUE);
   dpm($variables, 'Render Element');
   $rows = array();
 
