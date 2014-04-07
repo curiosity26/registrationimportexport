@@ -198,7 +198,7 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
   // Load up the file info again
   $file = $form_state['upload_file'];
   dpm($file, 'Upload Filed');
-  if (preg_match('/csv/', $file->filemime) !== FALSE) {
+  if (preg_match('/csv/', $file->filemime) != FALSE) {
     $delimiters = array(
       'COMMA' => ',',
       'TAB' => "\t",
@@ -208,7 +208,7 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
     _registration_import_csv($file, $entity_type, $entity, $form_state['values']['import'],
       $delimiter, $form_state['file_headers']);
   }
-  elseif (preg_match('/js(on)?/', $file->filemime) !== FALSE) {
+  elseif (preg_match('/js(on)?/', $file->filemime) != FALSE) {
     _registration_import_json($file, $entity_type, $entity);
   }
 }
