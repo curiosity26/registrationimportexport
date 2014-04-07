@@ -199,7 +199,6 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
   $file = $form_state['upload_file'];
 
   if (preg_match('/csv/', $file->filemime) != FALSE) {
-    dpm($form_state['values']['import'], 'Upload Filed');
     $delimiters = array(
       'COMMA' => ',',
       'TAB' => "\t",
@@ -229,11 +228,10 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'author_uid' => $user->uid
   );
 
-  ini_set("auto_detect_line_endings", true);
+  ini_set("auto_detect_line_endings", TRUE);
   $tally = array(); // To tally up field recurrences (used to determine item count)
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
-  fclose($fh);
   if ($headers = TRUE) {
     $headers = @fgetcsv($fh, 1000, $delimiter);
   }
@@ -303,6 +301,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     }
     $i++;
   }
+  fclose($fh);
   drupal_set_message(t('Registration import complete'));
 }
 
