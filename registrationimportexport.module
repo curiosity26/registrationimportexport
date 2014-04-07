@@ -159,8 +159,7 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
 
   if (!!$csv) {
     $form['import'] = array(
-      '#tree' => TRUE,
-      '#theme' => 'registration_import_table',
+      '#type' => 'registration_import_table',
       '#empty' => t('No data was found in the file'),
       '#header' => array(t('Column Name'), t('Mapped to Field Value'))
     );
@@ -506,14 +505,24 @@ function registrationimportexport_file_download($uri) {
   return NULL;
 }
 
-function registrationimportexport_theme() {
-  $theme = array(
+function registrationimportexport_element_info() {
+  return array(
+    'registration_import_table' => array(
+      '#input' => TRUE,
+      '#theme_wrappers' => array('form_element'),
+      '#header' => array(),
+      '#empty' => NULL,
+      '#tree' => TRUE
+    )
+  );
+}
+
+function registrationimportexport_theme($existing, $type, $theme, $path) {
+  return array(
     'registration_import_table' => array(
       'render element' => 'element'
     )
   );
-
-  return $theme;
 }
 
 function theme_registration_import_table($variables) {
