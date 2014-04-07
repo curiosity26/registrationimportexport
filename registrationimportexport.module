@@ -512,7 +512,8 @@ function registrationimportexport_element_info() {
       '#theme_wrappers' => array('form_element'),
       '#header' => array(),
       '#empty' => NULL,
-      '#tree' => TRUE
+      '#tree' => TRUE,
+      '#process' => array('ajax_process_form')
     )
   );
 }
