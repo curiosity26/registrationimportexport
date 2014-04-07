@@ -343,7 +343,8 @@ function registration_entity_export_form($form, &$form_state, $entity_type, $ent
   $form_state['entity_type'] = $entity_type;
   $form_state[$entity_type] = $entity;
 
-  drupal_set_message(t('When migrating registrations to another website, JSON format is recommended.'), 'warning');
+  drupal_set_message(t('When doing a "snapshot migration" in which the preservation of data is key,
+    JSON format is recommended.'), 'warning');
   $form['format'] = array(
     '#type' => 'select',
     '#options' => array(
