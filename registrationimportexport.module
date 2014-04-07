@@ -225,7 +225,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'entity_type' => $entity_type,
     'state' => registration_get_default_state(),
     'author_uid' => $user->uid,
-    'user_uid' => 0
+    'user_uid' => FALSE
   );
 
   ini_set("auto_detect_line_endings", TRUE);
@@ -252,11 +252,8 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
         continue;
       }
 
-      if ($key == 'user_uid' && isset($values['user_uid'])) {
+      if (($key == 'user_uid' && isset($values['user_uid'])) || ($key == 'user_uid' && !$value)) {
         continue;
-      }
-      elseif ($key == 'user_uid' && !$value) {
-        $value = 0;
       }
 
       if ($key == 'state') {
@@ -291,14 +288,16 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
         $delta++;
         $values[$key][$delta][$col_key] = NULL;
       }
-
+      $field_lang = field_language($entity_type, $entity, $instance['field_name']);
+      if (!$field_lang) {
+        $field_lang = 'und';
+      }
       if ($cardinality == FIELD_CARDINALITY_UNLIMITED || $delta <= $cardinality) {
-        $values[$key]['und'][$delta][$col_key] = $value;
+        $values[$key][$field_lang][$delta][$col_key] = $value;
       }
     }
 
     $registration = entity_create('registration', $values);
-    dpm($registration, "Registration");
     $success = registration_save($registration);
     if (!$success) {
       drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
