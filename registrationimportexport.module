@@ -117,7 +117,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
   }
 }
 
-function _registration_process_import($form, $form_state, $entity_type, $entity) {
+function _registration_process_import(&$form, &$form_state, $entity_type, $entity) {
   $form_state['registration_type'] = registration_get_entity_registration_type($entity_type, $entity);
   $instances = field_info_instances('registration', $form_state['registration_type']);
   $file = $form_state['upload_file'];
@@ -185,8 +185,6 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
     form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
     drupal_goto(); // Refresh the page.
   }
-
-  return $form;
 }
 
 function _registration_process_import_submit($form, &$form_state, $entity_type, $entity) {
