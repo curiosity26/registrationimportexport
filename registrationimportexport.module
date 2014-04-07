@@ -276,8 +276,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       list($key, $col_key) = explode(':', $key);
       $instance = field_read_instance('registration', $key, $values['type']);
       $field = field_read_field($instance['field_name']);
-      dpm($field);
-      $cardinality = $field['settings']['cardinality'];
+      $cardinality = $field['cardinality'];
 
       $matches = array();
       if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) == 1) {
