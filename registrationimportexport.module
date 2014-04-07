@@ -229,18 +229,16 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   );
 
   ini_set("auto_detect_line_endings", TRUE);
-  $tally = array(); // To tally up field recurrences (used to determine item count)
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
   if ($headers = TRUE) {
-    $headers = @fgetcsv($fh, 1000, $delimiter);
+    $row = @fgetcsv($fh, 1000, $delimiter);
   }
 
   // After mapping the csv file columns to registration values, import the values using the mappings
   $states = registration_get_active_states();
   $i = 0;
   while($row = @fgetcsv($fh, 1000, $delimiter)) {
-    $field_key_tally_reset = TRUE;
     $values = $defaults;
 
     foreach ($row as $j => $value) {
@@ -277,20 +275,25 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       list($key, $col_key) = explode(':', $key);
       $instance = field_read_instance('registration', $key, $values['type']);
       $field = field_read_field($instance['field_name']);
-      dpm($field);
       $cardinality = $field['cardinality'];
 
       $matches = array();
       if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) == 1) {
         $col_key = $matches['colkey'];
       }
-      if (!!$field_key_tally_reset) {
-        $tally[$key] = isset($tally[$key]) ? $tally[$key]++ : 0;
-        $field_key_tally_reset = FALSE;
+
+      if (!isset($values[$key])) {
+        $values[$key] = array('und' => array(0 => NULL));
       }
 
-      if ($cardinality == FIELD_CARDINALITY_UNLIMITED || ($tally[$key] <= $cardinality)) {
-        $values[$key]['und'][$tally[$key]][$col_key] = $value;
+      $delta = count($values[$key]) - 1;
+      if (isset($values[$key][$delta][$col_key])) {
+        $delta++;
+        $values[$key][$delta][$col_key] = NULL;
+      }
+
+      if ($cardinality == FIELD_CARDINALITY_UNLIMITED || $delta <= $cardinality) {
+        $values[$key]['und'][$delta][$col_key] = $value;
       }
     }
 
