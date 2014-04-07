@@ -127,9 +127,11 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
     '#title' => t('Instance Field Part'),
     '#title_visibility' => 'hidden',
     '#options' => array(
-      'count' => t('Count (Self + Guests'),
-      'anon_email' => t('Email'),
-      'user_uid' => t('User ID')
+      'Registration' => array(
+        'count' => t('Count (Self + Guests)'),
+        'anon_email' => t('Email'),
+        'user_uid' => t('User ID')
+      )
     ),
     '#empty_option' => '-- Skip Field --',
     '#empty_value' => FALSE
@@ -179,7 +181,6 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
         '#title' => $header
       ) + $selector;
     }
-    dpm($form['import'], 'Import Element');
   }
   else {
     form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
@@ -219,12 +220,12 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   );
 
   ini_set("auto_detect_line_endings", true);
-  $tally = array(); // To tally up field recurrences
+  $tally = array(); // To tally up field recurrences (used to determine item count)
   $filepath = drupal_realpath($file->uri);
   $fh = @fopen($filepath, 'r');
   fclose($fh);
   if ($headers = TRUE) {
-    $csv = @fgetcsv($fh, 1000, $delimiter);
+    $headers = @fgetcsv($fh, 1000, $delimiter);
   }
 
   // After mapping the csv file columns to registration values, import the values using the mappings
@@ -237,7 +238,8 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
       if (!$key) {
-        $values[$headers[$j]] = NULL;
+        $col_key = !empty($headers) ? $headers[$j] : 'Row '.$j;
+        $values[$col_key] = NULL;
         continue;
       }
 
@@ -517,7 +519,7 @@ function registrationimportexport_theme() {
 function theme_registration_import_table($variables) {
   $element = $variables['element'];
   $children = element_children($element);
-  dpm($element);
+  dpm($element, 'Render Element');
   $rows = array();
 
   foreach ($children as $name) {
