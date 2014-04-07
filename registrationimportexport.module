@@ -244,7 +244,9 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
 
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
-      if ($key == FALSE) {
+      if (($key == FALSE)
+        || ($key == 'user_uid' && isset($values['user_uid']))
+        || ($key == 'user_uid' && !isset($value))) {
         continue;
       }
 
@@ -253,12 +255,8 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
         continue;
       }
 
-      if (($key == 'user_uid' && isset($values['user_uid'])) || ($key == 'user_uid' && !isset($value))) {
-        continue;
-      }
-
       if ($key == 'state') {
-        $value = preg_replace('/[\s-]+/', '_', strtolower($value));
+        $value = preg_replace('/[^a-z0-9_]+/', '_', strtolower($value));
         if (in_array($value, $states)) {
           $values[$key] = $value;
         }
