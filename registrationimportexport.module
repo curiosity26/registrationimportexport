@@ -143,7 +143,7 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
     foreach (array_keys($field['columns']) as $column_name) {
       $columns[$instance['field_name'].':'.$column_name] = $column_name;
     }
-    $selector['#options'][$instance['field_name']] = array($instance['label'] => $columns);
+    $selector['#options'][$instance['label']] = $columns;
   }
 
   $delimiters = array(
