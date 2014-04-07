@@ -174,11 +174,12 @@ function _registration_process_import($form, $form_state, $entity_type, $entity)
     }
 
     $headers = array_filter($headers);
-    foreach ($headers as $header) {
-      $form['import'][] = array(
+    foreach ($headers as $i => $header) {
+      $form['import'][$i] = array(
         '#title' => $header
       ) + $selector;
     }
+    dpm($form['import'], 'Import Element');
   }
   else {
     form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
@@ -226,12 +227,6 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     $csv = @fgetcsv($fh, 1000, $delimiter);
   }
 
-  // iterate through rows and columns from the form, map to field values
-  $map = array();
-  foreach ($header_map as $j => $key) {
-    $map[$j] = $key;
-  }
-
   // After mapping the csv file columns to registration values, import the values using the mappings
   $states = registration_get_active_states();
   $i = 0;
@@ -240,9 +235,9 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     $values = $defaults;
 
     foreach ($row as $j => $value) {
-      $key = $map[$j];
+      $key = $header_map[$j];
       if (!$key) {
-        $values[$header_map[$j]] = NULL;
+        $values[$headers[$j]] = NULL;
         continue;
       }
 
