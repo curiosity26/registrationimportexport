@@ -40,7 +40,6 @@ function registrationimportexport_menu() {
 function registration_entity_import_form($form, &$form_state, $entity_type, $entity) {
   $form_state['entity_type'] = $entity_type;
   $form_state[$entity_type] = $entity;
-  $id = entity_id($entity_type, $entity_type);
   if (isset($form_state['upload_file']) && !!($file = $form_state['upload_file'])) {
     _registration_process_import($form, $form_state, $entity_type, $entity);
   }
@@ -71,7 +70,7 @@ function registration_entity_import_form($form, &$form_state, $entity_type, $ent
     $form['upload'] = array(
       '#type' => 'submit',
       '#value' => t('Upload'),
-      '#suffix' => l('Cancel', $entity_type.'/'.$id.'/registrations/settings')
+      '#suffix' => l('Cancel', entity_uri($entity_type, $entity).'/registrations/settings')
     );
   }
 
@@ -91,7 +90,6 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
   $op = $form_state['values']['op'];
   $entity_type = $form_state['entity_type'];
   $entity = $form_state[$entity_type];
-  $id = entity_id($entity_type, $entity);
 
   if ($op == 'Upload') {
     $file = $form_state['upload_file'];
@@ -101,7 +99,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
       $form_state['file_headers'] = $form_state['values']['file_headers'];
       if (preg_match('/js(on)?/', $file->filemime) != FALSE) {
         _registration_process_import_submit($form, $form_state, $entity_type, $entity);
-        $form_state['redirect'] = $entity_type.'/'.$id.'/registrations';
+        $form_state['redirect'] = entity_uri($entity_type, $entity).'/registrations';
       }
       else {
         $form_state['rebuild'] = TRUE;
@@ -112,7 +110,7 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
     }
   }
   else {
-    $form_state['redirect'] = $entity_type.'/'.$id.'/registrations';
+    $form_state['redirect'] = entity_uri($entity_type, $entity).'/registrations';
     _registration_process_import_submit($form, $form_state, $entity_type, $entity);
   }
 }
@@ -181,6 +179,12 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
         '#title' => $header
       ) + $selector;
     }
+
+    $form['op_import'] = array(
+      '#type' => 'submit',
+      '#value' => t('Import'),
+      '#suffix' => l('Cancel', entity_uri($entity_type, $entity).'/registrations')
+    );
   }
   else {
     form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
