@@ -283,7 +283,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       if (preg_match('/_(?<colkey>\d+)$/', $col_key, $matches) == 1) {
         $col_key = $matches['colkey'];
       }
-      if ($field_key_tally_reset) {
+      if (!!$field_key_tally_reset) {
         $tally[$key] = isset($tally[$key]) ? $tally[$key]++ : 1;
         $field_key_tally_reset = FALSE;
       }
