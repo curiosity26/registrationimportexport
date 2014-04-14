@@ -306,16 +306,14 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   }
   fclose($fh);
   $uri = entity_uri($entity_type, $entity);
-
-  batch_set(
-    array(
-      'title' => 'Importing',
-      'operations' => array(
-        '_registrationimportexport_batch_import' => array($items)
-      ),
-      'finished' => '_registrationimportexport_batch_import_finished'
-    )
+  $batch = array(
+    'title' => t('Importing'),
+    'operations' => array(
+      array('_registrationimportexport_batch_import', array($items)),
+    ),
+    'finished' => '_registrationimportexport_batch_import_finished',
   );
+  batch_set($batch);
   batch_process($uri['path'].'/registrations');
 }
 
@@ -348,15 +346,14 @@ function _registration_import_json($file, $entity_type, $entity) {
     }
 
     $uri = entity_uri($entity_type, $entity);
-    batch_set(
-      array(
-        'title' => 'Importing',
-        'operations' => array(
-          '_registrationimportexport_batch_import' => array($items)
-        ),
-        'finished' => '_registrationimportexport_batch_import_finished'
-      )
+    $batch = array(
+      'title' => t('Importing'),
+      'operations' => array(
+        array('_registrationimportexport_batch_import', array($items)),
+      ),
+      'finished' => '_registrationimportexport_batch_import_finished',
     );
+    batch_set($batch);
     batch_process($uri['path'].'/registrations');
   }
   else {
