@@ -231,7 +231,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'title' => t('Importing'),
     'operations' => array(
       array('_registrationimportexport_batch_csv_preimport' => array($fh, $entity_type, $entity, $header_map, $delimiter)),
-      array('_registrationimportexport_batch_import', array()),
+      //array('_registrationimportexport_batch_import', array()),
     ),
     'finished' => '_registrationimportexport_batch_import_finished',
   );
