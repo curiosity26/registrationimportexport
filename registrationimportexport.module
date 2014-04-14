@@ -372,6 +372,7 @@ function _registrationimportexport_batch_import($registrations, &$context) {
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
     $context['sandbox']['registrations'] = $registrations;
+    dpm($registrations, 'Init Registrations');
   }
 
   // Batch 5 at a time
