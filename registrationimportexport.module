@@ -305,6 +305,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     $i++;
   }
   fclose($fh);
+  $uri = entity_uri($entity_type, $entity);
 
   batch_set(
     array(
@@ -315,7 +316,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       'finished' => '_registrationimportexport_batch_import_finished'
     )
   );
-  batch_process();
+  batch_process($uri['path'].'/registrations');
 }
 
 function _registration_import_json($file, $entity_type, $entity) {
@@ -345,6 +346,8 @@ function _registration_import_json($file, $entity_type, $entity) {
         drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
       }*/
     }
+
+    $uri = entity_uri($entity_type, $entity);
     batch_set(
       array(
         'title' => 'Importing',
@@ -354,7 +357,7 @@ function _registration_import_json($file, $entity_type, $entity) {
         'finished' => '_registrationimportexport_batch_import_finished'
       )
     );
-    batch_process();
+    batch_process($uri['path'].'/registrations');
   }
   else {
     drupal_set_message(t('Unable to import the file'), 'error');
