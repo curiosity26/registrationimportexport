@@ -313,7 +313,7 @@ function _registrationimportexport_batch_csv_preimport($fh, $entity_type, $entit
       $key = $header_map[$j];
       if (($key == FALSE)
         || ($key == 'user_uid' && isset($values['user_uid']))
-        || ($key == 'user_uid' && !isset($value))) {
+        || ($key == 'user_uid' && strlen(trim($value)) > 0)) {
         continue;
       }
 
