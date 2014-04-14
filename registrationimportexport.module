@@ -369,11 +369,11 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $context['sandbox']['lines']++;
   }
 
-  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
-    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
+    fclose($fh);
   }
   else {
-    fclose($fh);
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
 }
 
@@ -416,7 +416,6 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
 }
 
 function _registrationimportexport_batch_import_finished(&$context) {
-  dpm($context['results'], 'Context Results');
   drupal_set_message(
     t('Successfully imported %count registrations, %success succeeded, %failed failed',
       array(
