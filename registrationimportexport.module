@@ -405,6 +405,7 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
     else {
       $context['sandbox']['reg_failed']++;
     }
+    $context['message'] = t('Importing record @num', array('@num' => $context['sandbox']['current_reg']));
     $context['sandbox']['current_reg']++;
     $context['sandbox']['progress']++;
   }
