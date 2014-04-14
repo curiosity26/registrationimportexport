@@ -368,7 +368,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $i++;
     $context['sandbox']['lines']++;
   }
-
+  dpm($context['results'], 'Items');
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
     fclose($fh);
   }
@@ -379,7 +379,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
 
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
   $registrations = array_merge($context['results'], $registrations);
-  dpm($context, 'Context');
+  dpm($context['results'], 'Context');
 
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
