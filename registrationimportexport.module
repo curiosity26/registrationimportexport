@@ -218,7 +218,77 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
 }
 
 function _registration_import_csv($file, $entity_type, $entity, $header_map, $delimiter = ',', $headers = FALSE) {
+  ini_set("auto_detect_line_endings", TRUE);
+  $filepath = drupal_realpath($file->uri);
+  $fh = @fopen($filepath, 'r');
+  if ($headers = TRUE) {
+    $row = @fgetcsv($fh, 1000, $delimiter);
+  }
+
+  $uri = entity_uri($entity_type, $entity);
+  $batch = array(
+    'title' => t('Importing'),
+    'operations' => array(
+      array('_registrationimportexport_batch_csv_preimport' => array($fh, $entity_type, $entity, $header_map, $delimiter)),
+      array('_registrationimportexport_batch_import', array(array())),
+    ),
+    'finished' => '_registrationimportexport_batch_import_finished',
+  );
+  batch_set($batch);
+  batch_process($uri['path'].'/registrations');
+}
+
+function _registration_import_json($file, $entity_type, $entity) {
   global $user;
+  ini_set("auto_detect_line_endings", true);
+  $filepath = drupal_realpath($file->uri);
+  $fh = @fopen($filepath, 'r');
+  $contents = file_get_contents($filepath);
+  if ($contents !== FALSE) {
+    $data = json_decode($contents);
+    fclose($fh);
+
+    $defaults = array(
+      'type' => registration_get_entity_registration_type($entity_type, $entity),
+      'entity_id' => entity_id($entity_type, $entity),
+      'entity_type' => $entity_type,
+      'state' => registration_get_default_state(),
+      'author_uid' => $user->uid
+    );
+
+    $items = array();
+    foreach ($data as $item) {
+      $item += $defaults;
+      $items[] = $item;
+    }
+
+    $uri = entity_uri($entity_type, $entity);
+    $batch = array(
+      'title' => t('Importing'),
+      'operations' => array(
+        array('_registrationimportexport_batch_import', array($items)),
+      ),
+      'finished' => '_registrationimportexport_batch_import_finished',
+    );
+    batch_set($batch);
+    batch_process($uri['path'].'/registrations');
+  }
+  else {
+    drupal_set_message(t('Unable to import the file'), 'error');
+  }
+}
+
+function _registrationimportexport_batch_csv_preimport($fh, $entity_type, $entity,
+                                                       $header_map = array(), $delimiter = ',', &$context) {
+
+  global $user;
+
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['max'] = 1;
+    $context['registrations'] = array();
+  }
+
   $default_state = registration_get_default_state();
   $defaults = array(
     'type' => registration_get_entity_registration_type($entity_type, $entity),
@@ -228,21 +298,17 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'author_uid' => $user->uid,
     'count' => 1
   );
-
-  ini_set("auto_detect_line_endings", TRUE);
-  $filepath = drupal_realpath($file->uri);
-  $fh = @fopen($filepath, 'r');
-  if ($headers = TRUE) {
-    $row = @fgetcsv($fh, 1000, $delimiter);
-  }
-
   // After mapping the csv file columns to registration values, import the values using the mappings
   $states = registration_get_active_states();
-  $i = 0;
   $items = array();
-  while($row = @fgetcsv($fh, 1000, $delimiter)) {
+  $i = 0;
+  $limit = 10;
+  $row = @fgetcsv($fh, 1000, $delimiter);
+  if (!$row) {
+    $context['sandbox']['progress'] = 1;
+  }
+  while(!!$row || $i < $limit) {
     $values = $defaults;
-
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
       if (($key == FALSE)
@@ -297,79 +363,29 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       }
     }
     $items[] = $values;
-    /*$registration = entity_create('registration', $values);
-    $success = registration_save($registration);
-    if (!$success) {
-      drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
-    }*/
     $i++;
   }
-  fclose($fh);
-  $uri = entity_uri($entity_type, $entity);
-  $batch = array(
-    'title' => t('Importing'),
-    'operations' => array(
-      array('_registrationimportexport_batch_import', array($items)),
-    ),
-    'finished' => '_registrationimportexport_batch_import_finished',
-  );
-  batch_set($batch);
-  batch_process($uri['path'].'/registrations');
-}
 
-function _registration_import_json($file, $entity_type, $entity) {
-  global $user;
-  ini_set("auto_detect_line_endings", true);
-  $filepath = drupal_realpath($file->uri);
-  $fh = @fopen($filepath, 'r');
-  $contents = file_get_contents($filepath);
-  if ($contents !== FALSE) {
-    $data = json_decode($contents);
-    fclose($fh);
-
-    $defaults = array(
-      'type' => registration_get_entity_registration_type($entity_type, $entity),
-      'entity_id' => entity_id($entity_type, $entity),
-      'entity_type' => $entity_type,
-      'state' => registration_get_default_state(),
-      'author_uid' => $user->uid
-    );
-
-    $items = array();
-    foreach ($data as $item) {
-      $item += $defaults;
-      $items[] = $item;
-      /*$registration = entity_create('registration', $item);
-      if (!registration_save($registration)) {
-        drupal_set_message(t('Error importing !nth registration in file.', array('!nth' => $i)), 'error');
-      }*/
-    }
-
-    $uri = entity_uri($entity_type, $entity);
-    $batch = array(
-      'title' => t('Importing'),
-      'operations' => array(
-        array('_registrationimportexport_batch_import', array($items)),
-      ),
-      'finished' => '_registrationimportexport_batch_import_finished',
-    );
-    batch_set($batch);
-    batch_process($uri['path'].'/registrations');
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['registrations'] = array_merge($context['registrations'], $items);
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
   else {
-    drupal_set_message(t('Unable to import the file'), 'error');
+    fclose($fh);
   }
 }
 
-function _registrationimportexport_batch_import($registrations, &$context) {
+function _registrationimportexport_batch_import($registrations = NULL, &$context) {
+  if (!$registrations || empty($registrations)) {
+    $registrations = $context['registrations'];
+  }
+
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_reg'] = 0;
     $context['sandbox']['reg_failed'] = 0;
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
-    $context['sandbox']['registrations'] = $registrations;
-    dpm($registrations, 'Init Registrations');
   }
 
   // Batch 5 at a time
@@ -402,7 +418,6 @@ function _registrationimportexport_batch_import_finished(&$context) {
       )
     )
   );
-  dpm($context['sandbox']['registrations']);
 }
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
