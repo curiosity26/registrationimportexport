@@ -280,7 +280,6 @@ function _registration_import_json($file, $entity_type, $entity) {
 
 function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $entity,
                                                        $header_map = array(), $delimiter = ',', &$context) {
-
   global $user;
 
   if (!isset($context['sandbox']['progress'])) {
@@ -363,6 +362,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
       }
     }
     $items[] = $values;
+    $row = @fgetcsv($fh, 1000, $delimiter);
     $i++;
   }
   dpm($items, 'Items');
@@ -392,6 +392,7 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
   $i = $context['sandbox']['progress'] % $context['sandbox']['max'];
   for (; $i < 5; $i++) {
     $items = $registrations[$i];
+    dpm($items, 'Import Items');
     $context['sandbox']['current_reg']++;
     $context['sandbox']['progress']++;
     $registration = entity_create('registration', $items);
