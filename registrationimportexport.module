@@ -278,7 +278,7 @@ function _registration_import_json($file, $entity_type, $entity) {
   }
 }
 
-function _registrationimportexport_batch_csv_preimport($fh, $entity_type, $entity,
+function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $entity,
                                                        $header_map = array(), $delimiter = ',', &$context) {
 
   global $user;
@@ -313,7 +313,7 @@ function _registrationimportexport_batch_csv_preimport($fh, $entity_type, $entit
       $key = $header_map[$j];
       if (($key == FALSE)
         || ($key == 'user_uid' && isset($values['user_uid']))
-        || ($key == 'user_uid' && !isset($value))) {
+        || ($key == 'user_uid' && strlen(trim($value)) > 0)) {
         continue;
       }
 
@@ -375,8 +375,8 @@ function _registrationimportexport_batch_csv_preimport($fh, $entity_type, $entit
   }
 }
 
-function _registrationimportexport_batch_import($registrations = NULL, &$context) {
-  if (!$registrations || empty($registrations)) {
+function _registrationimportexport_batch_import($registrations = array(), &$context) {
+  if (!count($registrations)) {
     $registrations = $context['registrations'];
   }
 
