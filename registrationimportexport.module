@@ -287,8 +287,9 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $context['sandbox']['lines'] = 0;
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['max'] = 1;
-    $context['results'] = array();
   }
+
+  dpm(func_get_args(), 'Import Args');
 
   $default_state = registration_get_default_state();
   $defaults = array(
@@ -416,6 +417,7 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
 }
 
 function _registrationimportexport_batch_import_finished(&$context) {
+  dpm($context, 'Context Finished');
   drupal_set_message(
     t('Successfully imported %count registrations, %success succeeded, %failed failed',
       array(
