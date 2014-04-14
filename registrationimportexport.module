@@ -174,7 +174,7 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
         $headers[] = t('Row !i', array('!i' => $i));
       }
     }
-
+    fclose($fh);
     $headers = array_filter($headers);
     foreach ($headers as $i => $header) {
       $form['import'][$i] = array(
@@ -190,6 +190,7 @@ function _registration_process_import(&$form, &$form_state, $entity_type, $entit
   }
   else {
     form_set_error('upload_file', t('There was an error parsing the file. Please try again.'));
+    fclose($fh);
     drupal_goto(); // Refresh the page.
   }
 }
