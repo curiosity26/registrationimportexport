@@ -231,7 +231,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'title' => t('Importing'),
     'operations' => array(
       array('_registrationimportexport_batch_csv_preimport' => array($fh, $entity_type, $entity, $header_map, $delimiter)),
-      //array('_registrationimportexport_batch_import', array()),
+      array('_registrationimportexport_batch_import', array()),
     ),
     'finished' => '_registrationimportexport_batch_import_finished',
   );
@@ -289,8 +289,6 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $context['sandbox']['max'] = 1;
   }
 
-  dpm(func_get_args(), 'Import Args');
-
   $default_state = registration_get_default_state();
   $defaults = array(
     'type' => registration_get_entity_registration_type($entity_type, $entity),
@@ -309,7 +307,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
   if (!$row) {
     $context['sandbox']['progress'] = 1;
   }
-  dpm($row, 'Row');
+
   while(!!$row || $i == $limit) {
     $values = $defaults;
     foreach ($row as $j => $value) {
@@ -371,7 +369,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $i++;
     $context['sandbox']['lines']++;
   }
-  dpm($base, 'Items');
+
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
     fclose($fh);
   }
@@ -382,7 +380,6 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
 
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
   $registrations = array_merge($context['results'], $registrations);
-  dpm($context['results'], 'Context');
 
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
@@ -419,7 +416,6 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
 }
 
 function _registrationimportexport_batch_import_finished(&$context) {
-  dpm($context, 'Context Finished');
   drupal_set_message(
     t('Successfully imported %count registrations, %success succeeded, %failed failed',
       array(
