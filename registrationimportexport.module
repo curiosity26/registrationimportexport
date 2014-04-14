@@ -374,9 +374,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
 }
 
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
-  if (!count($registrations)) {
-    $registrations = $context['results'];
-  }
+  $registrations = array_merge($context['results'], $registrations);
   dpm($registrations, 'Import Context');
 
   if (!isset($context['sandbox']['progress'])) {
@@ -413,6 +411,7 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
 }
 
 function _registrationimportexport_batch_import_finished(&$context) {
+  dpm($context['results'], 'Context Results');
   drupal_set_message(
     t('Successfully imported %count registrations, %success succeeded, %failed failed',
       array(
