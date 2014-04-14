@@ -299,7 +299,6 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
   );
   // After mapping the csv file columns to registration values, import the values using the mappings
   $states = registration_get_active_states();
-  $items = array();
   $i = 0;
   $limit = 10;
   $row = @fgetcsv($fh, 1000, $delimiter);
@@ -361,13 +360,12 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
         $values[$key][$field_lang][$delta][$col_key] = $value;
       }
     }
-    $items[] = $values;
+    $context['registrations'][] = $values;
     $row = @fgetcsv($fh, 1000, $delimiter);
     $i++;
   }
-  dpm($items, 'Items');
+  dpm($context['registrations'], 'Items');
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
-    $context['registrations'] = array_merge($context['registrations'], $items);
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
   else {
