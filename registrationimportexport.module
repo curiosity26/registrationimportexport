@@ -365,7 +365,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     $row = @fgetcsv($fh, 1000, $delimiter);
     $i++;
   }
-  dpm($context['registrations'], 'Items');
+
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
@@ -378,6 +378,7 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
   if (!count($registrations)) {
     $registrations = $context['registrations'];
   }
+  dpm($context, 'Import Context');
 
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
@@ -391,16 +392,20 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
   $i = $context['sandbox']['current_reg'];
   for (; $i < 5; $i++) {
     $items = $registrations[$i];
-    dpm($items, 'Import Items');
-    $context['sandbox']['current_reg']++;
-    $context['sandbox']['progress']++;
-    $registration = entity_create('registration', $items);
-    if (!!registration_save($registration)) {
-      $context['sandbox']['reg_success']++;
+    if (!!$items) {
+      $registration = entity_create('registration', $items);
+      if (!!registration_save($registration)) {
+        $context['sandbox']['reg_success']++;
+      }
+      else {
+        $context['sandbox']['reg_failed']++;
+      }
     }
     else {
       $context['sandbox']['reg_failed']++;
     }
+    $context['sandbox']['current_reg']++;
+    $context['sandbox']['progress']++;
   }
 
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
