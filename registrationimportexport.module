@@ -284,8 +284,10 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
   global $user;
 
   if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['lines'] = 0;
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['max'] = 1;
+    $context['results'] = array();
   }
 
   $default_state = registration_get_default_state();
@@ -361,8 +363,10 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
       }
     }
     $context['results'][] = $values;
+    $context['message'] = t('Converting line @num', array('@num' => $context['sandbox']['lines']));
     $row = @fgetcsv($fh, 1000, $delimiter);
     $i++;
+    $context['sandbox']['lines']++;
   }
 
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
