@@ -368,10 +368,12 @@ function _registrationimportexport_batch_import($registrations, &$context) {
     $context['sandbox']['reg_failed'] = 0;
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
+    $context['sandbox']['registrations'] = $registrations;
   }
 
   // Batch 5 at a time
-  for ($i = $context['sandbox']['current_reg']; $i < 5; $i++) {
+  $i = $context['sandbox']['progress'] % $context['sandbox']['max'];
+  for (; $i < 5; $i++) {
     $items = $registrations[$i];
     $context['sandbox']['current_reg']++;
     $context['sandbox']['progress']++;
@@ -399,6 +401,7 @@ function _registrationimportexport_batch_import_finished(&$context) {
       )
     )
   );
+  dpm($context['sandbox']['registrations']);
 }
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
