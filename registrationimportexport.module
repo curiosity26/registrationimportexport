@@ -235,7 +235,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     'title' => t('Importing'),
     'operations' => array(
       array('_registrationimportexport_batch_csv_import' => array($handler, $entity_type, $entity, $header_map, $delimiter)),
-      array('_registrationimportexport_batch_import', array()),
+      //array('_registrationimportexport_batch_import', array()),
     ),
     'finished' => '_registrationimportexport_batch_import_finished',
   );
@@ -287,8 +287,9 @@ function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
                                                        $header_map = array(), $delimiter = ',', &$context) {
   global $user;
   dpm(func_get_args(), 'args');
+  print_r(func_get_args());
   $context['finished'] = TRUE;
-  /*drupal_exit();
+  /*
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['lines'] = 0;
     $context['sandbox']['progress'] = 0;
