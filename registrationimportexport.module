@@ -247,13 +247,15 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       $key = $header_map[$j];
       if (($key == FALSE)
         || ($key == 'user_uid' && isset($values['user_uid']))
-        || ($key == 'user_uid' && (!is_integer($value) || (is_integer($value) && $value < 1)))) {
+        || ($key == 'user_uid' && (int)$value < 1)) {
         continue;
       }
 
       if ($key == 'anon_mail' && !!($reg_user = user_load_by_mail($value))) {
-        $values['user_uid'] = $reg_user->uid;
-        continue;
+        if (isset($reg_user->uid) && $reg_user->uid > 0) {
+          $values['user_uid'] = $reg_user->uid;
+          continue;
+        }
       }
 
       if ($key == 'state') {
