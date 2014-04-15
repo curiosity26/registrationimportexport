@@ -223,7 +223,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
   ini_set("auto_detect_line_endings", TRUE);
   $filepath = drupal_realpath($file->uri);
 
-  $fh = @fopen($filename, 'r');
+  $fh = @fopen($filepath, 'r');
   if ($headers == TRUE) {
     $row = @fgetcsv($fh, 1024, $delimiter);
   }
