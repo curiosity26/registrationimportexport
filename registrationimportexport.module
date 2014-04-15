@@ -309,7 +309,7 @@ function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
 
   $results = &$context['results'];
 
-  while($row = @fgetcsv($fh->fh, 1000, $delimiter) && $i < $limit) {
+  while($row = fgetcsv($fh->fh, 1000, $delimiter) && $i < $limit) {
     $values = $defaults;
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
@@ -369,10 +369,11 @@ function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
     $i++;
     $context['sandbox']['lines']++;
   }
-
+  dpm($results, 'results');
   $context['sandbox']['progress'] = count($results) == 0;
 
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
+    dpm($context, 'Context');
     fclose($fh->fh);
   }
   /*else {
