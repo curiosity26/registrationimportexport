@@ -352,7 +352,7 @@ function _registration_import_json($file, $entity_type, $entity) {
   }
 }
 
-function _registrationimportexport_batch_import($registrations = array(), &$context) {
+function _registrationimportexport_batch_import($registrations, &$context) {
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['registrations'] = $registrations;
@@ -361,11 +361,10 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
   }
-
+  dpm($context['sandbox']['registrations'], "regs");
   // Batch 5 at a time
   $i = 0;
   while ($i < 5 && $items = array_shift($context['sandbox']['registrations'])) {
-    $items = $registrations[$i];
     if (!!$items) {
       $registration = entity_create('registration', $items);
       if (!!registration_save($registration)) {
