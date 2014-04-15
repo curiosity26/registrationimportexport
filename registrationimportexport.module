@@ -247,7 +247,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       $key = $header_map[$j];
       if (($key == FALSE)
         || ($key == 'user_uid' && isset($values['user_uid']))
-        || ($key == 'user_uid' && strlen(trim($value)) > 0)) {
+        || ($key == 'user_uid' && strlen(trim($value)) == 0)) {
         continue;
       }
 
