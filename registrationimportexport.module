@@ -286,8 +286,9 @@ function _registration_import_json($file, $entity_type, $entity) {
 function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
                                                        $header_map = array(), $delimiter = ',', &$context) {
   global $user;
-  dpm(func_get_args(), 'results');
-  drupal_exit();
+  dpm(func_get_args(), 'args');
+  $context['finished'] = TRUE;
+  /*drupal_exit();
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['lines'] = 0;
     $context['sandbox']['progress'] = 0;
@@ -376,7 +377,7 @@ function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
     dpm($context, 'Context');
     fclose($fh->fh);
-  }
+  }*/
   /*else {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }*/
