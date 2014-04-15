@@ -221,13 +221,13 @@ function _registration_process_import_submit($form, &$form_state, $entity_type, 
 function _registration_import_csv($file, $entity_type, $entity, $header_map, $delimiter = ',', $headers = FALSE) {
   ini_set("auto_detect_line_endings", TRUE);
   $filepath = drupal_realpath($file->uri);
-
+  $results = array();
   $uri = entity_uri($entity_type, $entity);
   $batch = array(
     'title' => t('Importing'),
     'operations' => array(
-      array('_registrationimportexport_batch_csv_import' => array($filepath, $entity_type, $entity, $header_map, $headers, $delimiter)),
-      array('_registrationimportexport_batch_import', array()),
+      array('_registrationimportexport_batch_csv_import' => array($filepath, $entity_type, $entity, $header_map, $headers, $delimiter, $results)),
+      array('_registrationimportexport_batch_import', array($results)),
     ),
     'finished' => '_registrationimportexport_batch_import_finished',
   );
@@ -276,7 +276,7 @@ function _registration_import_json($file, $entity_type, $entity) {
 }
 
 function _registrationimportexport_batch_csv_import($filename, $entity_type, $entity,
-                                                       $header_map = array(), $headers = FALSE, $delimiter = ',', &$context) {
+                                                       $header_map = array(), $headers = FALSE, $delimiter = ',', &$results, &$context) {
   global $user;
 
   if (!isset($context['sandbox']['progress'])) {
@@ -305,9 +305,12 @@ function _registrationimportexport_batch_csv_import($filename, $entity_type, $en
   $i = 0;
   $limit = 10;
 
-  $results = &$context['results'];
-
-  while($row = fgetcsv($fh, 1000, $delimiter) && $i < $limit) {
+  $context['results'] = &$results;
+  $row = fgetcsv($fh, 1000, $delimiter);
+  if (!$row) {
+    $context['sandbox']['progress'] = 1;
+  }
+  while($row && $i < $limit) {
     $values = $defaults;
     foreach ($row as $j => $value) {
       $key = $header_map[$j];
@@ -366,20 +369,21 @@ function _registrationimportexport_batch_csv_import($filename, $entity_type, $en
     $context['message'] = t('Converting line @num', array('@num' => $context['sandbox']['lines']));
     $i++;
     $context['sandbox']['lines']++;
+    $row = fgetcsv($fh, 1000, $delimiter);
   }
-  $context['sandbox']['progress'] = count($results) == 0;
 
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
     dpm($context, 'Context');
     fclose($fh);
   }
-  /*else {
+  else {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
-  }*/
+  }
 }
 
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
   $registrations = array_merge($context['results'], $registrations);
+  dpm($registrations, 'Regs');
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_reg'] = 0;
