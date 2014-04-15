@@ -226,11 +226,15 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
     $row = @fgetcsv($fh, 1000, $delimiter);
   }
 
+  // Wrapping the file handler in an object to ensure it's always passed by reference
+  $handler = new stdClass();
+  $handler->fh = &$fh;
+
   $uri = entity_uri($entity_type, $entity);
   $batch = array(
     'title' => t('Importing'),
     'operations' => array(
-      array('_registrationimportexport_batch_csv_preimport' => array($fh, $entity_type, $entity, $header_map, $delimiter)),
+      array('_registrationimportexport_batch_csv_preimport' => array($handler, $entity_type, $entity, $header_map, $delimiter)),
       array('_registrationimportexport_batch_import', array()),
     ),
     'finished' => '_registrationimportexport_batch_import_finished',
@@ -279,7 +283,7 @@ function _registration_import_json($file, $entity_type, $entity) {
   }
 }
 
-function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $entity,
+function _registrationimportexport_batch_csv_import($fh, $entity_type, $entity,
                                                        $header_map = array(), $delimiter = ',', &$context) {
   global $user;
 
@@ -302,7 +306,7 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
   $states = registration_get_active_states();
   $i = 0;
   $limit = 10;
-  $row = @fgetcsv($fh, 1000, $delimiter);
+  $row = @fgetcsv($fh->fh, 1000, $delimiter);
   $base = &$context['results'];
   if (!$row) {
     $context['sandbox']['progress'] = 1;
@@ -365,22 +369,21 @@ function _registrationimportexport_batch_csv_preimport(&$fh, $entity_type, $enti
     }
     $base[] = $values;
     $context['message'] = t('Converting line @num', array('@num' => $context['sandbox']['lines']));
-    $row = @fgetcsv($fh, 1000, $delimiter);
+    $row = @fgetcsv($fh->fh, 1000, $delimiter);
     $i++;
     $context['sandbox']['lines']++;
   }
 
   if ($context['sandbox']['progress'] == $context['sandbox']['max']) {
-    fclose($fh);
+    fclose($fh->fh);
   }
-  else {
+  /*else {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
-  }
+  }*/
 }
 
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
   $registrations = array_merge($context['results'], $registrations);
-
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_reg'] = 0;
