@@ -247,7 +247,7 @@ function _registration_import_csv($file, $entity_type, $entity, $header_map, $de
       $key = $header_map[$j];
       if (($key == FALSE)
         || ($key == 'user_uid' && isset($values['user_uid']))
-        || ($key == 'user_uid' && (is_integer($value) && $value > 0))) {
+        || ($key == 'user_uid' && (!is_integer($value) || (is_integer($value) && $value < 1)))) {
         continue;
       }
 
@@ -361,7 +361,7 @@ function _registrationimportexport_batch_import($registrations, &$context) {
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
   }
-  dpm($context['sandbox']['registrations'], "regs");
+
   // Batch 5 at a time
   $i = 0;
   while ($i < 5 && $items = array_shift($context['sandbox']['registrations'])) {
