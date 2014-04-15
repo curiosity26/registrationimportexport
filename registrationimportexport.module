@@ -359,10 +359,11 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
     $context['sandbox']['reg_failed'] = 0;
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
+    $context['results']['last_reg'] = 0;
   }
 
   // Batch 5 at a time
-  $i = $context['sandbox']['current_reg'];
+  $i = $context['results']['last_reg'];
   for (; $i < 5; $i++) {
     $items = $registrations[$i];
     if (!!$items) {
@@ -381,6 +382,8 @@ function _registrationimportexport_batch_import($registrations = array(), &$cont
     $context['sandbox']['current_reg']++;
     $context['sandbox']['progress']++;
   }
+
+  $context['results']['last_reg'] += $i;
 
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
