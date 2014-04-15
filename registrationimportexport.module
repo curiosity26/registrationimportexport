@@ -355,32 +355,33 @@ function _registration_import_json($file, $entity_type, $entity) {
 function _registrationimportexport_batch_import($registrations = array(), &$context) {
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
+    $context['sandbox']['registrations'] = $registrations;
     $context['sandbox']['current_reg'] = 0;
     $context['sandbox']['reg_failed'] = 0;
     $context['sandbox']['reg_success'] = 0;
     $context['sandbox']['max'] = count($registrations);
-    $context['results']['last_reg'] = 0;
   }
 
   // Batch 5 at a time
-  $i = $context['results']['last_reg'];
-  for (; $i < 5; $i++) {
+  $i = 0;
+  while ($i < 5 && $items = array_shift($context['sandbox']['registrations'])) {
     $items = $registrations[$i];
     if (!!$items) {
       $registration = entity_create('registration', $items);
       if (!!registration_save($registration)) {
-        $context['sandbox']['reg_success']++;
+        $context['results']['reg_success']++;
       }
       else {
-        $context['sandbox']['reg_failed']++;
+        $context['results']['reg_failed']++;
       }
     }
     else {
-      $context['sandbox']['reg_failed']++;
+      $context['results']['reg_failed']++;
     }
-    $context['message'] = t('Importing record @num', array('@num' => $context['sandbox']['current_reg']));
-    $context['sandbox']['current_reg']++;
+    $context['message'] = t('Importing record @num', array('@num' => $context['results']['current_reg']));
+    $context['results']['current_reg']++;
     $context['sandbox']['progress']++;
+    $i++;
   }
 
   $context['results']['last_reg'] += $i;
@@ -394,9 +395,9 @@ function _registrationimportexport_batch_import_finished(&$context) {
   drupal_set_message(
     t('Successfully imported %count registrations, %success succeeded, %failed failed',
       array(
-        '%count' => $context['sandbox']['max'],
-        '%success' => $context['sandbox']['reg_success'],
-        '%failed' => $context['sandbox']['reg_failed']
+        '%count' => $context['results']['max'],
+        '%success' => $context['results']['reg_success'],
+        '%failed' => $context['results']['reg_failed']
       )
     )
   );
