@@ -385,8 +385,6 @@ function _registrationimportexport_batch_import($registrations, &$context) {
     $i++;
   }
 
-  $context['results']['last_reg'] += $i;
-
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
