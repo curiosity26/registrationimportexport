@@ -426,7 +426,6 @@ function registration_entity_export_form($form, &$form_state, $entity_type, $ent
 }
 
 function registration_entity_export_form_submit($form, &$form_state) {
-  dpm($form_state);
   $entity_type = $form_state['entity_type'];
   $entity = $form_state[$entity_type];
   $format = $form_state['values']['format'];
@@ -439,7 +438,9 @@ function registration_export($ids = FALSE, $format = 'csv', $entity_type = NULL,
   }
   elseif (!!$entity_type && !!$entity) {
     $registration_type = registration_get_entity_registration_type($entity_type, $entity);
-    $registrations = registration_load_multiple(FALSE, array('type' => $registration_type));
+    $id = entity_id($entity_type, $entity);
+    $registrations = registration_load_multiple(FALSE,
+      array('type' => $registration_type, 'entity_id' => $id, 'entity_type' => $entity_type));
   }
   else {
     $registrations = registration_load_multiple();
@@ -545,7 +546,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
               $row[] = $item;
             }
           }
-          else {
+          elseif (!empty($value[0])) {
             foreach ($value[0] as $item) {
               $row[] = $item;
             }
