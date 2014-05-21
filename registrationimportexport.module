@@ -38,8 +38,15 @@ function registrationimportexport_menu() {
 }
 
 function registration_entity_import_form($form, &$form_state, $entity_type, $entity) {
+
+  if (arg(0) == 'node') {
+    $entity_type = 'node';
+    $entity = node_load(arg(1));
+  }
+
   $form_state['entity_type'] = $entity_type;
   $form_state[$entity_type] = $entity;
+
   if (isset($form_state['upload_file']) && !!($file = $form_state['upload_file'])) {
     _registration_process_import($form, $form_state, $entity_type, $entity);
   }
@@ -90,11 +97,6 @@ function registration_entity_import_form_submit(&$form, &$form_state) {
   $op = $form_state['values']['op'];
   $entity_type = $form_state['entity_type'];
   $entity = $form_state[$entity_type];
-
-  if (!$entity && arg(0) == 'node') {
-    $entity_type = 'node';
-    $entity = node_load(arg(1));
-  }
 
   if ($op == 'Upload') {
     $file = $form_state['upload_file'];
@@ -408,6 +410,11 @@ function _registrationimportexport_batch_import_finished(&$context) {
 }
 
 function registration_entity_export_form($form, &$form_state, $entity_type, $entity) {
+  if (arg(0) == 'node') {
+    $entity_type = 'node';
+    $entity = node_load(arg(1));
+  }
+
   $form_state['entity_type'] = $entity_type;
   $form_state[$entity_type] = $entity;
 
