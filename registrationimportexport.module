@@ -525,6 +525,8 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   if (!!$registrations) {
     foreach ($registrations as $id => $registration) {
       $vars = get_object_vars($registration);
+      $vars['created'] = strftime("%F %r %Z", $vars['created']);
+
       unset(
       $vars['is_new'],
       $vars['registration_id'],
