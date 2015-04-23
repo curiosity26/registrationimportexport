@@ -491,7 +491,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
   $reg_fields['entity_type'],
   $reg_fields['author_uid'],
   $reg_fields['rdf_mapping'],
-  $reg_fields['created'],
+  //$reg_fields['created'],
   $reg_fields['updated']
   );
 
@@ -533,7 +533,7 @@ function _registration_export_csv($registrations, $entity_type, $entity) {
       $vars['entity_type'],
       $vars['author_uid'],
       $vars['rdf_mapping'],
-      $vars['created'],
+      //$vars['created'],
       $vars['updated']
       );
       $row = &$rows[$id];
